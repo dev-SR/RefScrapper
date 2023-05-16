@@ -103,11 +103,15 @@ class TitleNAbstractGrabber(WebDriverSetup):
                 by=By.CSS_SELECTOR,
                 value="a[class='nova-legacy-e-link nova-legacy-e-link--color-inherit nova-legacy-e-link--theme-bare']",
             )
-            time = card.find_element(
-                by=By.TAG_NAME,
-                value="time",
-            )
-            date_time = time.get_attribute("datetime")
+            date_time = ""
+            try:
+                time = card.find_element(
+                    by=By.TAG_NAME,
+                    value="time",
+                )
+                date_time = time.get_attribute("datetime")
+            except Exception:
+                pass
 
             for link in titles_links:
                 if "https://www.researchgate.net/publication/" in link.get_attribute(
@@ -119,12 +123,11 @@ class TitleNAbstractGrabber(WebDriverSetup):
                         "paper_title": "",
                         "paper_link": "",
                         "abstract": "",
-                        "published_date": "",
+                        "published_date": date_time,
                         "done": 0,
                     }
                     paper_info["paper_title"] = link.text
                     paper_info["paper_link"] = link.get_attribute("href")
-                    paper_info["published_date"] = date_time
                     papers_df = pd.concat(
                         [papers_df, pd.DataFrame([paper_info])], ignore_index=True
                     )
