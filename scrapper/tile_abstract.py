@@ -92,10 +92,14 @@ class TitleNAbstractGrabber(WebDriverSetup):
                 showMoreFound = False
 
     def fetchTitles(self, save_in, author_name):
+        # div[class='nova-legacy-v-entity-item__stack nova-legacy-v-publication-item__stack--gutter-m']
+        #
         cards = self.find_elements(
             by=By.CSS_SELECTOR,
-            value="div[class='nova-legacy-v-publication-item__stack nova-legacy-v-publication-item__stack--gutter-m']",
+            value="div[class='nova-legacy-v-entity-item__stack nova-legacy-v-entity-item__stack--gutter-m']",
         )
+        if len(cards) == 0:
+            return False
 
         papers_df = pd.DataFrame()
         for card in cards:
@@ -103,15 +107,15 @@ class TitleNAbstractGrabber(WebDriverSetup):
                 by=By.CSS_SELECTOR,
                 value="a[class='nova-legacy-e-link nova-legacy-e-link--color-inherit nova-legacy-e-link--theme-bare']",
             )
-            date_time = ""
-            try:
-                time = card.find_element(
-                    by=By.TAG_NAME,
-                    value="time",
-                )
-                date_time = time.get_attribute("datetime")
-            except Exception:
-                pass
+            # date_time = ""
+            # try:
+            #     time = card.find_element(
+            #         by=By.TAG_NAME,
+            #         value="time",
+            #     )
+            #     date_time = time.get_attribute("datetime")
+            # except Exception:
+            #     pass
 
             for link in titles_links:
                 if "https://www.researchgate.net/publication/" in link.get_attribute(
@@ -123,19 +127,22 @@ class TitleNAbstractGrabber(WebDriverSetup):
                         "paper_title": "",
                         "paper_link": "",
                         "abstract": "",
-                        "published_date": date_time,
+                        # "published_date": date_time,
                         "done": 0,
                     }
+                    print(link.text)
                     paper_info["paper_title"] = link.text
                     paper_info["paper_link"] = link.get_attribute("href")
                     papers_df = pd.concat(
                         [papers_df, pd.DataFrame([paper_info])], ignore_index=True
                     )
-
+        # print("fetchTitles")
+        print(papers_df.shape)
         papers_df.to_csv(save_in, index=False)
         print(f"Saved in {save_in}")
+        return True
 
-    def fetchAbstracts(self):
+    def fetchAbstracts(self, paper_link):
         abstract = ""
         self.implicitly_wait(5)
         try:
@@ -144,7 +151,19 @@ class TitleNAbstractGrabber(WebDriverSetup):
                 value="div[class='nova-legacy-e-expandable-text__container'] div:nth-child(1)",
             )
             abstract = abstract_div.text
+            # print(len(abstract))
         except Exception as e:
+            # # Find all <span> elements within the <div>
+            # span_elements = div_element.find_elements_by_xpath(".//span")
+
+            # # Merge text from all <span> elements into a single string
+            # merged_text = ''.join(span.text for span in span_elements)
+
+            # Print the merged text
+            # print(merged_text)
+            # print(e)
             print("No abstract found")
+            print(paper_link)
+            print()
 
         return abstract
